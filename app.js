@@ -1,6 +1,6 @@
 const inquirer = require('inquirer');
-const fs = require('fs');
-const generatePage = require('./src/page-template')
+const generatePage = require('./src/page-template');
+const { writeFile, copyFile} = require('./utils/generate-site');
 
 
 
@@ -131,16 +131,37 @@ Add a New Project
       });
 };
 
+// ask the user for their information using inquirer prompts
+// returns a all data as an object within a Promise
 promptUser()
+   // capture the returned data and stored within the projects array
+   // recursively call promptProject for as many projects
+   // the user wants to add
+   // returns the entire data
    .then(promptProject)
+   // the finished portfolio data object is returned as portfolioData
+   // and sent into the generatePage() function, which will return the
+   // finished HTML template code into pageHTML
    .then(portfolioData => {
-      const pageHTML = generatePage(portfolioData);
-
-      fs.writeFile('./index.html', pageHTML, err => {
-         if (err) throw new Error(err);
-
-         console.log('Portfolio complete! Check out index.html to see the output!')
-      });
-
-   });
-
+      return generatePage(portfolioData);
+   })
+   // we pass pageHTML into writeFile() function, which returns a Promise
+   // into the next .then() method
+   .then(pageHTML => {
+      return writeFile(pageHTML);
+   })
+   // upon a successful file creation, we take the writeFileResponse
+   // object provided by the writeFile() functions resolve() execution
+   // to log it, and then we return copyFile()
+   .then(writeFileResponse => {
+      console.log(writeFileResponse);
+      return copyFile();
+   })
+   // the Promise returned by copyFile() then lets is know if the css
+   // file was coping correctly, and if so, we're all done
+   .then(copyFileResponse => {
+      console.log(copyFileResponse);
+   })
+   .catch(err => {
+      console.log(err);
+   })
